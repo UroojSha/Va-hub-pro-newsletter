@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VA Hub Pro — Weekly Email Generator</title>
+  <style>
+    :root {
+      --navy: #0a1a33;
+      --navy-2: #0f2547;
+      --card: #11294d;
+      --border: #20406e;
+      --text: #eaf0f8;
+      --muted: #9fb3cf;
+      --gold: #f5b301;
+      --gold-2: #d99c00;
+      --green: #34d399;
+      --red: #f87171;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(160deg, var(--navy), var(--navy-2));
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 22px; }
+    .brand { font-size: 13px; letter-spacing: .18em; text-transform: uppercase; color: var(--gold); font-weight: 700; }
+    h1 { font-size: 24px; margin-top: 6px; font-weight: 700; }
+    .sub { color: var(--muted); font-size: 14px; margin-top: 6px; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+    input, select, textarea {
+      width: 100%;
+      background: var(--navy);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      color: var(--text);
+      padding: 11px 12px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--gold); }
+    .field { margin-bottom: 14px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .row > .field { flex: 1; min-width: 200px; }
+
+    button {
+      border: none; border-radius: 9px; cursor: pointer;
+      font-size: 14px; font-weight: 700; padding: 12px 16px;
+      transition: transform .05s, background .15s, opacity .15s;
+    }
+    button:active { transform: translateY(1px); }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    .btn-primary { background: var(--gold); color: #1a1300; }
+    .btn-primary:hover { background: var(--gold-2); }
+    .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--gold); }
+    .btn-green { background: var(--green); color: #053b29; }
+    .btn-green:hover { filter: brightness(1.05); }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+
+    .statusbar {
+      display: flex; justify-content: space-between; align-items: center; gap: 10px;
+      font-size: 13px; color: var(--muted); flex-wrap: wrap;
+    }
+    .statusbar b { color: var(--text); }
+
+    .preview-subject { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .preview-line { color: var(--muted); font-style: italic; margin-bottom: 14px; }
+    .preview-body {
+      white-space: pre-wrap; line-height: 1.6; font-size: 14.5px;
+      background: var(--navy); border: 1px solid var(--border); border-radius: 9px;
+      padding: 16px; max-height: 460px; overflow: auto;
+    }
+    .meta { font-size: 12px; color: var(--muted); margin-top: 10px; }
+
+    .toast {
+      margin-bottom: 16px; padding: 12px 14px; border-radius: 9px; font-size: 14px;
+      display: none;
+    }
+    .toast.show { display: block; }
+    .toast.ok { background: rgba(52,211,153,.12); border: 1px solid var(--green); color: var(--green); }
+    .toast.err { background: rgba(248,113,113,.12); border: 1px solid var(--red); color: var(--red); }
+    .toast.info { background: rgba(159,179,207,.1); border: 1px solid var(--border); color: var(--muted); }
+
+    .hidden { display: none !important; }
+    .spinner {
+      display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(0,0,0,.25);
+      border-top-color: #1a1300; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: -2px; margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* login */
+    .login-card { max-width: 380px; margin: 8vh auto 0; }
+    footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <!-- LOGIN -->
+  <div id="loginView" class="wrap">
+    <header>
+      <div class="brand">VA Hub Pro</div>
+      <h1>Weekly Email Generator</h1>
+    </header>
+    <div class="card login-card">
+      <div class="field">
+        <label for="pw">Password</label>
+        <input type="password" id="pw" placeholder="Enter password" autocomplete="current-password" />
+      </div>
+      <div id="loginToast" class="toast"></div>
+      <button class="btn-primary" id="loginBtn" style="width:100%">Unlock</button>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="appView" class="wrap hidden">
+    <header>
+      <div class="brand">VA Hub Pro</div>
+      <h1>Weekly Email Generator</h1>
+      <div class="sub">Generate this week's email, preview it, and send it to your CRM.</div>
+    </header>
+
+    <div class="card">
+      <div class="statusbar">
+        <div id="lastSent">Last sent: <b>never</b></div>
+        <button class="btn-ghost" id="logoutBtn" style="padding:7px 12px;font-size:12px">Log out</button>
+      </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <div class="card">
+      <div class="row">
+        <div class="field">
+          <label for="topic">This week's topic (leave empty for auto)</label>
+          <input type="text" id="topic" placeholder="e.g. reactivating dead leads, speed-to-lead, AI follow-up voice" />
+        </div>
+        <div class="field" style="max-width:220px">
+          <label for="type">Email type</label>
+          <select id="type">
+            <option value="auto">Auto Pick</option>
+            <option value="bridge">Bridge Issue</option>
+            <option value="ai">AI Tutorial</option>
+            <option value="leadgen">Lead Gen Tactic</option>
+            <option value="systems">Systems Issue</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" id="generateBtn">Generate Email</button>
+        <button class="btn-ghost" id="genSendBtn">Generate &amp; Send</button>
+        <button class="btn-ghost" id="cronBtn" title="Runs the same job the Monday 9am schedule runs">Run Weekly Auto-Send (test)</button>
+      </div>
+    </div>
+
+    <div id="previewCard" class="card hidden">
+      <div class="preview-subject" id="pvSubject"></div>
+      <div class="preview-line" id="pvPreview"></div>
+      <div class="preview-body" id="pvBody"></div>
+      <div class="meta" id="pvMeta"></div>
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn-green" id="sendBtn">Send to GHL</button>
+        <button class="btn-ghost" id="regenBtn">Regenerate</button>
+      </div>
+    </div>
+
+    <footer>VA Hub Pro — automated weekly email system</footer>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const PW_KEY = "vh_pw";
+    let currentEmail = null;
+
+    function getPw() { return sessionStorage.getItem(PW_KEY) || ""; }
+    function setPw(v) { sessionStorage.setItem(PW_KEY, v); }
+    function clearPw() { sessionStorage.removeItem(PW_KEY); }
+
+    async function api(path, opts = {}) {
+      const headers = Object.assign({ "Content-Type": "application/json", "x-app-password": getPw() }, opts.headers || {});
+      const res = await fetch(path, Object.assign({}, opts, { headers }));
+      let data = null;
+      try { data = await res.json(); } catch (_) {}
+      return { status: res.status, data };
+    }
+
+    function toast(el, msg, kind) {
+      el.textContent = msg;
+      el.className = "toast show " + (kind || "info");
+    }
+    function clearToast(el) { el.className = "toast"; }
+
+    function setBusy(btn, busy, label) {
+      if (busy) {
+        btn.dataset.label = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner"></span>' + (label || "Working...");
+        btn.disabled = true;
+      } else {
+        btn.innerHTML = btn.dataset.label || btn.innerHTML;
+        btn.disabled = false;
+      }
+    }
+
+    // ---------- login ----------
+    async function doLogin() {
+      const pw = $("pw").value.trim();
+      if (!pw) return toast($("loginToast"), "Enter the password.", "err");
+      setPw(pw);
+      const { status } = await api("/api/login", { method: "POST", body: JSON.stringify({ password: pw }) });
+      if (status === 200) {
+        clearToast($("loginToast"));
+        showApp();
+      } else {
+        clearPw();
+        toast($("loginToast"), "Wrong password.", "err");
+      }
+    }
+
+    function showApp() {
+      $("loginView").classList.add("hidden");
+      $("appView").classList.remove("hidden");
+      loadStatus();
+    }
+    function showLogin() {
+      $("appView").classList.add("hidden");
+      $("loginView").classList.remove("hidden");
+    }
+
+    // ---------- status ----------
+    async function loadStatus() {
+      const { status, data } = await api("/api/status");
+      if (status === 401) return showLogin();
+      const ls = data && data.lastSent;
+      if (ls) {
+        const when = new Date(ls.sentAt).toLocaleString();
+        $("lastSent").innerHTML = `Last sent: <b>${when}</b> · ${escapeHtml(ls.topic || "")} <span style="color:var(--muted)">(${escapeHtml(ls.type || "")})</span>`;
+      } else {
+        $("lastSent").innerHTML = "Last sent: <b>never</b>";
+      }
+    }
+
+    // ---------- generate / send ----------
+    function renderPreview(email, sent) {
+      currentEmail = email;
+      $("pvSubject").textContent = email.subject;
+      $("pvPreview").textContent = email.preview || "";
+      $("pvBody").textContent = email.body;
+      $("pvMeta").textContent = `Topic: ${email.topic} · Type: ${email.type} · Model: ${email.model || ""}`;
+      $("previewCard").classList.remove("hidden");
+      $("sendBtn").classList.toggle("hidden", !!sent);
+      $("previewCard").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    async function generate() {
+      clearToast($("toast"));
+      setBusy($("generateBtn"), true, "Generating...");
+      const body = JSON.stringify({ topic: $("topic").value, type: $("type").value });
+      const { status, data } = await api("/api/generate", { method: "POST", body });
+      setBusy($("generateBtn"), false);
+      if (status === 401) return showLogin();
+      if (data && data.ok) {
+        renderPreview(data.email, false);
+        toast($("toast"), "Email generated. Review it, then Send to GHL.", "ok");
+      } else {
+        toast($("toast"), (data && data.error) || "Generation failed.", "err");
+      }
+    }
+
+    async function send() {
+      if (!currentEmail) return;
+      setBusy($("sendBtn"), true, "Sending...");
+      const { status, data } = await api("/api/send", { method: "POST", body: JSON.stringify(currentEmail) });
+      setBusy($("sendBtn"), false);
+      if (status === 401) return showLogin();
+      if (data && data.ok) {
+        toast($("toast"), "Sent to GHL successfully.", "ok");
+        $("sendBtn").classList.add("hidden");
+        loadStatus();
+      } else {
+        toast($("toast"), (data && data.error) || "Send failed.", "err");
+      }
+    }
+
+    async function generateAndSend() {
+      clearToast($("toast"));
+      setBusy($("genSendBtn"), true, "Generating & sending...");
+      const body = JSON.stringify({ topic: $("topic").value, type: $("type").value });
+      const { status, data } = await api("/api/generate-and-send", { method: "POST", body });
+      setBusy($("genSendBtn"), false);
+      if (status === 401) return showLogin();
+      if (data && data.ok) {
+        renderPreview(data.email, true);
+        toast($("toast"), "Generated and sent to GHL.", "ok");
+        loadStatus();
+      } else {
+        toast($("toast"), (data && data.error) || "Failed.", "err");
+      }
+    }
+
+    async function runCron() {
+      clearToast($("toast"));
+      setBusy($("cronBtn"), true, "Running...");
+      const { status, data } = await api("/api/cron", { method: "POST", body: "{}" });
+      setBusy($("cronBtn"), false);
+      if (status === 401) return showLogin();
+      if (data && data.ok) {
+        if (data.email) renderPreview(data.email, true);
+        toast($("toast"), "Weekly auto-send ran successfully.", "ok");
+        loadStatus();
+      } else {
+        toast($("toast"), (data && data.error) || "Cron run failed.", "err");
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    }
+
+    // ---------- wire up ----------
+    $("loginBtn").addEventListener("click", doLogin);
+    $("pw").addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); });
+    $("logoutBtn").addEventListener("click", () => { clearPw(); showLogin(); });
+    $("generateBtn").addEventListener("click", generate);
+    $("genSendBtn").addEventListener("click", generateAndSend);
+    $("cronBtn").addEventListener("click", runCron);
+    $("sendBtn").addEventListener("click", send);
+    $("regenBtn").addEventListener("click", generate);
+
+    // Auto-enter the app if we already have a stored password that still works.
+    (async function init() {
+      if (getPw()) {
+        const { status } = await api("/api/status");
+        if (status === 200) return showApp();
+        clearPw();
+      }
+      showLogin();
+    })();
+  </script>
+</body>
+</html>

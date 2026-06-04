@@ -1,0 +1,20 @@
+{
+  "name": "vahubpro-weekly-email",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Automated weekly email generator + sender for VA Hub Pro (Claude API + GHL webhook, deployable on Vercel).",
+  "main": "index.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "node-cron": "^3.0.3"
+  }
+}
