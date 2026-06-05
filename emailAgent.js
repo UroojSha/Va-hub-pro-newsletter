@@ -6,10 +6,13 @@
 
 const Anthropic = require("@anthropic-ai/sdk");
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// .trim() guards against trailing whitespace/newlines that sneak in when env
+// vars are pasted into a hosting dashboard — a newline in the key makes an
+// invalid HTTP header and the SDK fails with "Connection error".
+const client = new Anthropic({ apiKey: (process.env.ANTHROPIC_API_KEY || "").trim() });
 
 // Model is an env var so it can be changed without code edits.
-const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
+const MODEL = (process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6").trim();
 const MAX_TOKENS = 2000;
 
 // Issue types + the rotation weights from the skill.

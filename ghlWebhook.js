@@ -7,7 +7,7 @@
  * @returns {Promise<{ok:boolean, status:number, body:string}>}
  */
 async function sendToGhl(email) {
-  const url = process.env.GHL_WEBHOOK_URL;
+  const url = (process.env.GHL_WEBHOOK_URL || "").trim();
   if (!url) {
     throw new Error("GHL_WEBHOOK_URL is not set. Add your GoHighLevel inbound webhook URL.");
   }
