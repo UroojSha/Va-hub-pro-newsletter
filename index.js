@@ -63,7 +63,18 @@ async function generateAndSend({ topic, type }) {
 
 // ---------- routes ----------
 
-app.get("/api/health", (_req, res) => res.json({ ok: true }));
+app.get("/api/health", (_req, res) => {
+  const key = (process.env.ANTHROPIC_API_KEY || "").trim();
+  res.json({
+    ok: true,
+    build: "diag-2",
+    keyPresent: !!key,
+    keyLen: key.length,
+    keyPrefix: key.slice(0, 12),
+    model: (process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6").trim(),
+    webhookPresent: !!(process.env.GHL_WEBHOOK_URL || "").trim(),
+  });
+});
 
 // Validate the page password (used by the login screen).
 app.post("/api/login", (req, res) => {

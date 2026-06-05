@@ -226,12 +226,21 @@ async function generateEmail({ topic = "", type = "auto" } = {}) {
 
   console.log(`[emailAgent] generating | type=${chosenType} | topic=${topic || "(auto)"} | model=${MODEL}`);
 
-  const resp = await client.messages.create({
-    model: MODEL,
-    max_tokens: MAX_TOKENS,
-    system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
-    messages: [{ role: "user", content: buildUserInstruction(topic, chosenType) }],
-  });
+  let resp;
+  try {
+    resp = await client.messages.create({
+      model: MODEL,
+      max_tokens: MAX_TOKENS,
+      system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+      messages: [{ role: "user", content: buildUserInstruction(topic, chosenType) }],
+    });
+  } catch (e) {
+    // Surface the real underlying reason (the SDK's "Connection error." hides it).
+    const cause = e?.cause?.message || e?.cause?.code || (e?.cause ? String(e.cause) : "");
+    const status = e?.status ? ` status=${e.status}` : "";
+    console.error("[emailAgent] Claude API error:", e?.message, "| cause:", e?.cause);
+    throw new Error(`Claude API: ${e?.message}${status}${cause ? ` | cause=${cause}` : ""}`);
+  }
 
   const raw = (resp.content || []).map((b) => b.text || "").join("");
   const parsed = parseEmail(raw);
